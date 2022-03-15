@@ -10,6 +10,18 @@ type Config struct {
 	Github []*GithubConfig `yaml:"github"`
 }
 
+func (c *Config) GetSources() []RepositorySource {
+	sources := make([]RepositorySource, len(c.Github))
+
+	offset := 0;
+	for i := 0; i < len(c.Github); i++ {
+		sources[i + offset] = c.Github[i]
+		offset++
+	}
+
+	return sources
+}
+
 func (c *Config) setDefaults() {
 	if c.Github != nil {
 		for _, config := range c.Github {

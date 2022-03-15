@@ -8,6 +8,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v43/github"
 	"golang.org/x/oauth2"
+	"net/url"
 	"os"
 )
 
@@ -16,6 +17,36 @@ type GithubConfig struct {
 	AccessToken string `yaml:"access_token"`
 	URL         string `yaml:"url,omitempty"`
 	client      *github.Client
+}
+
+func (c *GithubConfig) Test() error {
+	me, err := c.getMe()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Authenticated with github as: %s", me.Login)
+	return nil
+}
+
+func (c *GithubConfig) GetName() string {
+	return c.JobName
+}
+
+func (c *GithubConfig) ListRepositories() ([]*Repository, error) {
+	repos, err := c.getAllRepos()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*Repository, len(repos))
+	for i, repo := range repos {
+		gitUrl, err := url.Parse(*repo.CloneURL)
+		if err != nil {
+			return out, err
+		}
+		gitUrl.User = url.UserPassword("github", c.AccessToken)
+		out[i] = &Repository{GitURL: *gitUrl}
+	}
+	return out, nil
 }
 
 func (c *GithubConfig) setDefaults() {
@@ -33,12 +64,13 @@ func (c *GithubConfig) setDefaults() {
 		}
 	}
 }
-func (c *GithubConfig) GetMe() (*github.User, error) {
+
+func (c *GithubConfig) getMe() (*github.User, error) {
 	response, _, err := c.client.Users.Get(context.Background(), "")
 	return response, err
 }
 
-func (c *GithubConfig) GetRepos() ([]*github.Repository, error) {
+func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
 	all := make([]*github.Repository, 0)
 	var err error
 

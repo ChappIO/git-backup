@@ -9,28 +9,27 @@ import (
 
 func main() {
 	config := loadConfig()
-	for _, githubConfig := range config.Github {
-		me, err := githubConfig.GetMe()
-		if err != nil {
-			log.Printf("Communication Error: %s", err)
-			os.Exit(100)
+	for _, source := range config.GetSources() {
+		sourceName := source.GetName()
+		log.Printf("=== %s ===", sourceName)
+		if err := source.Test(); err != nil {
+			log.Printf("Failed to verify connection to job [%s]: %s", sourceName, err)
+			os.Exit(110)
 		}
-		log.Printf("=== %s ===", githubConfig.JobName)
-		log.Printf("Authenticated as: %s", *me.Login)
-		repos, err := githubConfig.GetRepos()
+		repos, err := source.ListRepositories()
 		if err != nil {
 			log.Printf("Communication Error: %s", err)
 			os.Exit(100)
 		}
 		for _, repo := range repos {
-			log.Println(*repo.FullName)
-			targetPath := filepath.Join("backup", githubConfig.JobName, *repo.FullName)
+			log.Printf("Discovered %s", repo.FullName)
+			targetPath := filepath.Join("backup", sourceName, repo.FullName)
 			err := os.MkdirAll(targetPath, os.ModePerm)
 			if err != nil {
 				log.Printf("Failed to create directory: %s", err)
 				os.Exit(100)
 			}
-			err = githubConfig.CloneInto(repo, targetPath)
+			err = repo.CloneInto(targetPath)
 			if err != nil {
 				log.Printf("Failed to clone: %s", err)
 				os.Exit(100)
