@@ -13,9 +13,9 @@ type Config struct {
 func (c *Config) GetSources() []RepositorySource {
 	sources := make([]RepositorySource, len(c.Github))
 
-	offset := 0;
+	offset := 0
 	for i := 0; i < len(c.Github); i++ {
-		sources[i + offset] = c.Github[i]
+		sources[i+offset] = c.Github[i]
 		offset++
 	}
 
@@ -29,7 +29,6 @@ func (c *Config) setDefaults() {
 		}
 	}
 }
-
 
 func LoadFile(path string) (out Config, err error) {
 	handle, err := os.Open(path)

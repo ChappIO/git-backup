@@ -4,6 +4,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"log"
 	"net/url"
 	"os"
 )
@@ -50,11 +51,13 @@ func (r *Repository) CloneInto(path string) error {
 
 	switch err {
 	case transport.ErrEmptyRemoteRepository:
+		log.Printf("%s is an empty repository", r.FullName)
 		//  Empty repo does not need backup
 		return nil
 	default:
 		return err
 	case git.NoErrAlreadyUpToDate:
+		log.Printf("No need to pull, %s is already up-to-date", r.FullName)
 		// Already up to date on current branch, still need to refresh other branches
 		fallthrough
 	case nil:
@@ -69,6 +72,7 @@ func (r *Repository) CloneInto(path string) error {
 
 	switch err {
 	case git.NoErrAlreadyUpToDate:
+		log.Printf("No need to fetch, %s is already up-to-date", r.FullName)
 		return nil
 	default:
 		return err

@@ -3,13 +3,10 @@ package git_backup
 import (
 	"context"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v43/github"
 	"golang.org/x/oauth2"
+	"log"
 	"net/url"
-	"os"
 )
 
 type GithubConfig struct {
@@ -24,7 +21,7 @@ func (c *GithubConfig) Test() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Authenticated with github as: %s", me.Login)
+	log.Printf("Authenticated with github as: %s", *me.Login)
 	return nil
 }
 
@@ -44,7 +41,10 @@ func (c *GithubConfig) ListRepositories() ([]*Repository, error) {
 			return out, err
 		}
 		gitUrl.User = url.UserPassword("github", c.AccessToken)
-		out[i] = &Repository{GitURL: *gitUrl}
+		out[i] = &Repository{
+			FullName: *repo.FullName,
+			GitURL:   *gitUrl,
+		}
 	}
 	return out, nil
 }
@@ -129,51 +129,4 @@ func (c *GithubConfig) getStarredRepos(page int) ([]*github.Repository, *github.
 		repos[i] = starred[i].Repository
 	}
 	return repos, response, err
-}
-
-func (c *GithubConfig) CloneInto(repo *github.Repository, path string) error {
-	auth := &http.BasicAuth{
-		Username: "git",
-		Password: c.AccessToken,
-	}
-	gitRepo, err := git.PlainClone(path, false, &git.CloneOptions{
-		URL:      *repo.CloneURL,
-		Auth:     auth,
-		Progress: os.Stdout,
-	})
-	switch err {
-	case transport.ErrEmptyRemoteRepository:
-		return nil
-	default:
-		return err
-	case git.ErrRepositoryAlreadyExists:
-		fallthrough
-	case nil:
-	}
-	if err == git.ErrRepositoryAlreadyExists {
-		if gitRepo, err = git.PlainOpen(path); err != nil {
-			return err
-		} else if w, err := gitRepo.Worktree(); err != nil {
-			return err
-		} else if err := w.Pull(&git.PullOptions{
-			Auth:     auth,
-			Progress: os.Stdout,
-		}); err == git.NoErrAlreadyUpToDate {
-			return nil
-		} else if err != nil {
-			return err
-		}
-	}
-	err = gitRepo.Fetch(&git.FetchOptions{
-		Auth:     auth,
-		Progress: os.Stdout,
-		Tags:     git.AllTags,
-		Force:    true,
-	})
-	switch err {
-	case git.NoErrAlreadyUpToDate:
-		return nil
-	default:
-		return err
-	}
 }
