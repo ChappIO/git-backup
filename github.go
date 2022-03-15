@@ -101,31 +101,45 @@ func (c *GithubConfig) getStarredRepos(page int) ([]*github.Repository, *github.
 
 func (c *GithubConfig) CloneInto(repo *github.Repository, path string) error {
 	auth := &http.BasicAuth{
-		Username:  "git",
-		Password:  c.AccessToken,
+		Username: "git",
+		Password: c.AccessToken,
 	}
-	_, err := git.PlainClone(path, false, &git.CloneOptions{
-		URL:               *repo.CloneURL,
-		Auth:              auth,
-		Progress:          os.Stdout,
+	gitRepo, err := git.PlainClone(path, false, &git.CloneOptions{
+		URL:      *repo.CloneURL,
+		Auth:     auth,
+		Progress: os.Stdout,
 	})
+	switch err {
+	case transport.ErrEmptyRemoteRepository:
+		return nil
+	default:
+		return err
+	case git.ErrRepositoryAlreadyExists:
+		fallthrough
+	case nil:
+	}
 	if err == git.ErrRepositoryAlreadyExists {
-		if r, pullErr := git.PlainOpen(path); pullErr != nil {
-			err = pullErr
-		} else if w, pullErr := r.Worktree(); pullErr != nil {
-			err = pullErr
-		} else if pullErr := w.Pull(&git.PullOptions{
-			Auth:              auth,
-			Progress:          os.Stdout,
-		}); pullErr != nil {
-			err = pullErr
+		if gitRepo, err = git.PlainOpen(path); err != nil {
+			return err
+		} else if w, err := gitRepo.Worktree(); err != nil {
+			return err
+		} else if err := w.Pull(&git.PullOptions{
+			Auth:     auth,
+			Progress: os.Stdout,
+		}); err == git.NoErrAlreadyUpToDate {
+			return nil
+		} else if err != nil {
+			return err
 		}
 	}
-
+	err = gitRepo.Fetch(&git.FetchOptions{
+		Auth:     auth,
+		Progress: os.Stdout,
+		Tags:     git.AllTags,
+		Force:    true,
+	})
 	switch err {
 	case git.NoErrAlreadyUpToDate:
-		fallthrough
-	case transport.ErrEmptyRemoteRepository:
 		return nil
 	default:
 		return err
