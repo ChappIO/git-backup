@@ -10,9 +10,35 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - goos: darwin
+            goarch: amd64
+            goopts: ""
+            filename: git-backup-darwin-intel
+          - goos: darwin
+            goarch: arm64
+            goopts: ""
+            filename: git-backup-darwin-m1
+          - goos: linux
+            goarch: amd64
+            goopts: ""
+            filename: git-backup-linux-x64
+          - goos: linux
+            goarch: arm64
+            goopts: ""
+            filename: git-backup-linux-arm64
+          - goos: linux
+            goarch: arm
+            goopts: GOARM=7
+            filename: git-backup-linux-armv7
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.17.8'
-      - run: go build ./cmd/git-backup
+      - run: ${{ matrix.goopts }} go build ./cmd/${{ matrix.filename }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
