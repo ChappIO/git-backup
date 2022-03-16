@@ -33,12 +33,16 @@ jobs:
             goarch: arm
             goopts: GOARM=7
             filename: git-backup-linux-armv7
+          - goos: windows
+            goarch: amd64
+            goopts: ""
+            filename: git-backup-windows-x64.exe
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.17.8'
-      - run: ${{ matrix.goopts }} go build ./cmd/${{ matrix.filename }}
+      - run: ${{ matrix.goopts }} go build -o ${{ matrix.filename }} ./cmd/git-backup
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
