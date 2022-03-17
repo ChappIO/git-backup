@@ -22,6 +22,19 @@ github:
     # "read:org, repo"
     # https://github.com/settings/tokens/new?scopes=repo,read:org
     access_token: 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
+    # (optional) Back up repos you own.
+    # (default: true)
+    owned: true
+    # (optional) Back up repos you starred.
+    # (default: true)
+    starred: true
+    # (optional) Back up repos on which you 
+    # are a collaborator. (default: true)
+    collaborator: true
+    # (optional) Back up repos owned by 
+    # organisations of which you are a member.
+    # (default: true)
+    org_member: true
 ```
 
 ## Usage
