@@ -7,13 +7,22 @@ import (
 	"golang.org/x/oauth2"
 	"log"
 	"net/url"
+	"strings"
 )
 
+func boolPointer(b bool) *bool {
+	return &b
+}
+
 type GithubConfig struct {
-	JobName     string `yaml:"job_name"`
-	AccessToken string `yaml:"access_token"`
-	URL         string `yaml:"url,omitempty"`
-	client      *github.Client
+	JobName      string `yaml:"job_name"`
+	AccessToken  string `yaml:"access_token"`
+	URL          string `yaml:"url,omitempty"`
+	Starred      *bool  `yaml:"starred,omitempty"`
+	OrgMember    *bool  `yaml:"org_member,omitempty"`
+	Collaborator *bool  `yaml:"collaborator,omitempty"`
+	Owned        *bool  `yaml:"owned,omitempty"`
+	client       *github.Client
 }
 
 func (c *GithubConfig) Test() error {
@@ -52,6 +61,18 @@ func (c *GithubConfig) ListRepositories() ([]*Repository, error) {
 func (c *GithubConfig) setDefaults() {
 	if c.JobName == "" {
 		c.JobName = "GitHub"
+	}
+	if c.Collaborator == nil {
+		c.Collaborator = boolPointer(true)
+	}
+	if c.OrgMember == nil {
+		c.OrgMember = boolPointer(true)
+	}
+	if c.Owned == nil {
+		c.Owned = boolPointer(true)
+	}
+	if c.Starred == nil {
+		c.Starred = boolPointer(true)
 	}
 	httpClient := oauth2.NewClient(context.Background(), oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.AccessToken}))
 	if c.URL == "" {
@@ -106,11 +127,28 @@ func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
 }
 
 func (c *GithubConfig) getRepos(page int) ([]*github.Repository, *github.Response, error) {
+	affiliations := make([]string, 0)
+
+	if *c.Owned {
+		affiliations = append(affiliations, "owner")
+	}
+	if *c.Collaborator {
+		affiliations = append(affiliations, "collaborator")
+	}
+	if *c.OrgMember {
+		affiliations = append(affiliations, "organization_member")
+	}
+
+	if len(affiliations) == 0 {
+		return make([]*github.Repository, 0), &github.Response{}, nil
+	}
+
 	return c.client.Repositories.List(context.Background(), "", &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{
 			Page:    page,
 			PerPage: 100,
 		},
+		Affiliation: strings.Join(affiliations, ","),
 	})
 }
 
@@ -125,7 +163,7 @@ func (c *GithubConfig) getStarredRepos(page int) ([]*github.Repository, *github.
 		return nil, response, err
 	}
 	repos := make([]*github.Repository, len(starred))
-	for i, _ := range repos {
+	for i := range repos {
 		repos[i] = starred[i].Repository
 	}
 	return repos, response, err
