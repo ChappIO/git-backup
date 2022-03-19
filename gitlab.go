@@ -103,6 +103,15 @@ func (g *GitLabConfig) getRepos(opts *gitlab.ListProjectsOptions) ([]*gitlab.Pro
 }
 
 func (g *GitLabConfig) setDefaults() {
+	if g.Member == nil {
+		g.Member = boolPointer(true)
+	}
+	if g.Owned == nil {
+		g.Owned = boolPointer(true)
+	}
+	if g.Starred == nil {
+		g.Starred = boolPointer(true)
+	}
 	if g.JobName == "" {
 		g.JobName = "GitLab"
 	}
