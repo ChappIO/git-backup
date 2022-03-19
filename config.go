@@ -12,7 +12,7 @@ type Config struct {
 }
 
 func (c *Config) GetSources() []RepositorySource {
-	sources := make([]RepositorySource, len(c.Github) + len(c.GitLab))
+	sources := make([]RepositorySource, len(c.Github)+len(c.GitLab))
 
 	offset := 0
 	for i := 0; i < len(c.Github); i++ {
