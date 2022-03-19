@@ -1,6 +1,6 @@
 # git-backup
 
-A cli to pull all your GitHub repositories for backup purposes.
+A cli to pull all your git repositories for backup purposes.
 
 ## Download
 
