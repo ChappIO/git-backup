@@ -10,10 +10,6 @@ import (
 	"strings"
 )
 
-func boolPointer(b bool) *bool {
-	return &b
-}
-
 type GithubConfig struct {
 	JobName      string `yaml:"job_name"`
 	AccessToken  string `yaml:"access_token"`

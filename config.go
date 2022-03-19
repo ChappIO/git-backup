@@ -8,14 +8,19 @@ import (
 
 type Config struct {
 	Github []*GithubConfig `yaml:"github"`
+	GitLab []*GitLabConfig `yaml:"gitlab"`
 }
 
 func (c *Config) GetSources() []RepositorySource {
-	sources := make([]RepositorySource, len(c.Github))
+	sources := make([]RepositorySource, len(c.Github)+len(c.GitLab))
 
 	offset := 0
 	for i := 0; i < len(c.Github); i++ {
-		sources[i+offset] = c.Github[i]
+		sources[offset] = c.Github[i]
+		offset++
+	}
+	for i := 0; i < len(c.GitLab); i++ {
+		sources[offset] = c.GitLab[i]
 		offset++
 	}
 
@@ -25,6 +30,11 @@ func (c *Config) GetSources() []RepositorySource {
 func (c *Config) setDefaults() {
 	if c.Github != nil {
 		for _, config := range c.Github {
+			config.setDefaults()
+		}
+	}
+	if c.GitLab != nil {
+		for _, config := range c.GitLab {
 			config.setDefaults()
 		}
 	}

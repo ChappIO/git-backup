@@ -35,6 +35,27 @@ github:
     # organisations of which you are a member.
     # (default: true)
     org_member: true
+# The gitlab section contains backup jobs for
+# GitLab.com and GitLab on premise
+gitlab:
+  # (optional) The job name. This is used to
+  # create a subfolder in the backup folder. 
+  # (default: GitLab)
+  - job_name: gitlab.com
+    # (required) The GitLab access token.
+    # Create one with the scopes: "api"
+    # https://gitlab.com/-/profile/personal_access_tokens?scopes=api&name=git-backup
+    access_token: glpat-6t78yuihy789uy8t768
+    # (optional) Back up repos you own.
+    # (default: true)
+    owned: true
+    # (optional) Back up repos you starred.
+    # (default: true)
+    starred: true
+    # (optional) Back up repos owned by 
+    # teams of which you are a member.
+    # (default: true)
+    member: true
 ```
 
 ## Usage
