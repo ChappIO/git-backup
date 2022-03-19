@@ -35,6 +35,10 @@ github:
     # organisations of which you are a member.
     # (default: true)
     org_member: true
+    # (optional) Set this url to connect to
+    # your self-hosted github install.
+    # (default: https://api.github.com)
+    url: https://github.mydomain.com
 # The gitlab section contains backup jobs for
 # GitLab.com and GitLab on premise
 gitlab:
@@ -56,6 +60,10 @@ gitlab:
     # teams of which you are a member.
     # (default: true)
     member: true
+    # (optional) Set this url to connect to
+    # your self-hosted gitlab install.
+    # (default: https://gitlab.com/)
+    url: https://gitlab.mydomain.com
 ```
 
 ## Usage
