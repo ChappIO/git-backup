@@ -4,13 +4,15 @@ import (
 	"github.com/xanzy/go-gitlab"
 	"log"
 	"net/url"
-	"strings"
 )
 
 type GitLabConfig struct {
 	URL         string `yaml:"url,omitempty"`
 	JobName     string `yaml:"job_name"`
 	AccessToken string `yaml:"access_token"`
+	Starred     *bool  `yaml:"starred,omitempty"`
+	Member      *bool  `yaml:"member,omitempty"`
+	Owned       *bool  `yaml:"owned,omitempty"`
 	client      *gitlab.Client
 }
 
@@ -30,27 +32,33 @@ func (g *GitLabConfig) Test() error {
 func (g *GitLabConfig) ListRepositories() ([]*Repository, error) {
 	out := make(map[string]*Repository, 0)
 
-	if repos, err := g.getAllRepos(&gitlab.ListProjectsOptions{Starred: boolPointer(true)}); err != nil {
-		return nil, err
-	} else {
-		for _, repo := range repos {
-			out[repo.FullName] = repo
+	if *g.Starred {
+		if repos, err := g.getAllRepos(&gitlab.ListProjectsOptions{Starred: boolPointer(true)}); err != nil {
+			return nil, err
+		} else {
+			for _, repo := range repos {
+				out[repo.FullName] = repo
+			}
 		}
 	}
 
-	if repos, err := g.getAllRepos(&gitlab.ListProjectsOptions{Owned: boolPointer(true)}); err != nil {
-		return nil, err
-	} else {
-		for _, repo := range repos {
-			out[repo.FullName] = repo
+	if *g.Owned {
+		if repos, err := g.getAllRepos(&gitlab.ListProjectsOptions{Owned: boolPointer(true)}); err != nil {
+			return nil, err
+		} else {
+			for _, repo := range repos {
+				out[repo.FullName] = repo
+			}
 		}
 	}
 
-	if repos, err := g.getAllRepos(&gitlab.ListProjectsOptions{Membership: boolPointer(true)}); err != nil {
-		return nil, err
-	} else {
-		for _, repo := range repos {
-			out[repo.FullName] = repo
+	if *g.Member {
+		if repos, err := g.getAllRepos(&gitlab.ListProjectsOptions{Membership: boolPointer(true)}); err != nil {
+			return nil, err
+		} else {
+			for _, repo := range repos {
+				out[repo.FullName] = repo
+			}
 		}
 	}
 
@@ -76,13 +84,9 @@ func (g *GitLabConfig) getAllRepos(opts *gitlab.ListProjectsOptions) ([]*Reposit
 				return out, err
 			}
 			gitUrl.User = url.UserPassword("git", g.AccessToken)
-			nameParts := strings.Split(repo.NameWithNamespace, "/")
-			for i2, part := range nameParts {
-				nameParts[i2] = strings.TrimSpace(part)
-			}
 			out = append(out, &Repository{
 				GitURL:   *gitUrl,
-				FullName: strings.Join(nameParts, "/"),
+				FullName: repo.PathWithNamespace,
 			})
 		}
 		if len(repos) == 0 {
