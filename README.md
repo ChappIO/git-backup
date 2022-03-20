@@ -1,6 +1,6 @@
 # git-backup
 
-A cli to pull all your git repositories for backup purposes.
+A cli to pull all your git repositories for backup purposes. It is completely stand-alone. You don't even need to install git.
 
 ## Download
 
