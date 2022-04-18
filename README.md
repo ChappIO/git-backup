@@ -6,9 +6,9 @@ A cli to pull all your git repositories for backup purposes. It is completely st
 
 The latest version can be downloaded from the [releases page](https://github.com/ChappIO/git-backup/releases).
 
-## Configuration
+## Configuration File
 
-Example Configuration:
+Example yaml Configuration:
 ```yaml
 # The github section contains backup jobs for
 # GitHub and GitHub Enterprise
@@ -66,7 +66,7 @@ gitlab:
     url: https://gitlab.mydomain.com
 ```
 
-## Usage
+## Usage: CLI
 
 ```asciidoc
 Usage: git-backup
@@ -76,4 +76,14 @@ Options:
         The target path to the backup folder. (default "backup")
   -config.file string
         The path to your config file. (default "git-backup.yml")
+```
+
+## Usage: Docker
+
+First, create your [git-backup.yml file](#configuration-file) at `/path/to/your/backups`.
+
+Then update your backups using the mounted volume.
+
+```bash
+docker run --volume /path/to/backups:/backups ghcr.io/chappio/git-backup:latest
 ```
