@@ -11,6 +11,7 @@ import (
 
 var configFilePath = flag.String("config.file", "git-backup.yml", "The path to your config file.")
 var targetPath = flag.String("backup.path", "backup", "The target path to the backup folder.")
+var failAtEnd = flag.Bool("backup.fail-at-end", false, "Fail at the end of backing up repositories, rather than right away.")
 
 func main() {
 	flag.Parse()
@@ -22,6 +23,7 @@ func main() {
 		os.Exit(111)
 	}
 	repoCount := 0
+	errors := 0
 	backupStart := time.Now()
 	for _, source := range sources {
 		sourceName := source.GetName()
@@ -45,13 +47,20 @@ func main() {
 			}
 			err = repo.CloneInto(targetPath)
 			if err != nil {
+				errors++
 				log.Printf("Failed to clone: %s", err)
-				os.Exit(100)
+				if *failAtEnd == false {
+					os.Exit(100)
+				}
 			}
 		}
 		repoCount++
 	}
-	log.Printf("Backed up %d repositories in %s", repoCount, time.Now().Sub(backupStart))
+	log.Printf("Backed up %d repositories in %s, encountered %d errors", repoCount, time.Now().Sub(backupStart), errors)
+
+	if errors > 0 {
+		os.Exit(100)
+	}
 }
 
 func loadConfig() gitbackup.Config {
