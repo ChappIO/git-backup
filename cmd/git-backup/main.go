@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 var configFilePath = flag.String("config.file", "git-backup.yml", "The path to your config file.")
@@ -15,7 +16,14 @@ func main() {
 	flag.Parse()
 
 	config := loadConfig()
-	for _, source := range config.GetSources() {
+	sources := config.GetSources()
+	if len(sources) == 0 {
+		log.Printf("Found a config file at [%s] but detected no sources. Are you sure the file is properly formed?", *configFilePath)
+		os.Exit(111)
+	}
+	repoCount := 0
+	backupStart := time.Now()
+	for _, source := range sources {
 		sourceName := source.GetName()
 		log.Printf("=== %s ===", sourceName)
 		if err := source.Test(); err != nil {
@@ -41,7 +49,9 @@ func main() {
 				os.Exit(100)
 			}
 		}
+		repoCount++
 	}
+	log.Printf("Backed up %d repositories in %s", repoCount, time.Now().Sub(backupStart))
 }
 
 func loadConfig() gitbackup.Config {

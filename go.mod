@@ -7,7 +7,7 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/xanzy/go-gitlab v0.60.0
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
 
 require (
@@ -34,4 +34,5 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
