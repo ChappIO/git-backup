@@ -53,8 +53,8 @@ func main() {
 					os.Exit(100)
 				}
 			}
+			repoCount++
 		}
-		repoCount++
 	}
 	log.Printf("Backed up %d repositories in %s, encountered %d errors", repoCount, time.Now().Sub(backupStart), errors)
 
