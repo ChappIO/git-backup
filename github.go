@@ -107,18 +107,21 @@ func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
 		return all, err
 	}
 
-	for repos, response, apiErr := c.getStarredRepos(1); true; repos, response, apiErr = c.getStarredRepos(response.NextPage) {
-		if apiErr != nil {
-			err = apiErr
-			break
-		} else {
-			all = append(all, repos...)
-		}
+	if *c.Starred {
+		for repos, response, apiErr := c.getStarredRepos(1); true; repos, response, apiErr = c.getStarredRepos(response.NextPage) {
+			if apiErr != nil {
+				err = apiErr
+				break
+			} else {
+				all = append(all, repos...)
+			}
 
-		if len(repos) == 0 || response.NextPage == 0 {
-			break
+			if len(repos) == 0 || response.NextPage == 0 {
+				break
+			}
 		}
 	}
+
 	return all, err
 }
 
