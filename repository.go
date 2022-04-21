@@ -21,6 +21,15 @@ type Repository struct {
 	FullName string
 }
 
+func isBare(repo *git.Repository) (bool, error) {
+	config, err := repo.Config()
+	if err != nil {
+		return false, err
+	}
+
+	return config.Core.IsBare, nil
+}
+
 func (r *Repository) CloneInto(path string, bare bool) error {
 	var auth http.AuthMethod
 	if r.GitURL.User != nil {
@@ -39,13 +48,17 @@ func (r *Repository) CloneInto(path string, bare bool) error {
 	if err == git.ErrRepositoryAlreadyExists {
 		// Pull instead of clone
 		if gitRepo, err = git.PlainOpen(path); err == nil {
-			if w, wErr := gitRepo.Worktree(); wErr != nil {
-				err = wErr
-			} else {
-				err = w.Pull(&git.PullOptions{
-					Auth:     auth,
-					Progress: os.Stdout,
-				})
+			// we need to check whether it's a bare repo or not.
+			// if not we should pull, if it is then pull won't work
+			if isBare, bErr := isBare(gitRepo); bErr == nil && !isBare {
+				if w, wErr := gitRepo.Worktree(); wErr != nil {
+					err = wErr
+				} else {
+					err = w.Pull(&git.PullOptions{
+						Auth:     auth,
+						Progress: os.Stdout,
+					})
+				}
 			}
 		}
 	}
