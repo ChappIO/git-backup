@@ -1,12 +1,13 @@
 package git_backup
 
 import (
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"log"
 	"net/url"
 	"os"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 type RepositorySource interface {
@@ -20,7 +21,7 @@ type Repository struct {
 	FullName string
 }
 
-func (r *Repository) CloneInto(path string) error {
+func (r *Repository) CloneInto(path string, bare bool) error {
 	var auth http.AuthMethod
 	if r.GitURL.User != nil {
 		password, _ := r.GitURL.User.Password()
@@ -29,7 +30,7 @@ func (r *Repository) CloneInto(path string) error {
 			Password: password,
 		}
 	}
-	gitRepo, err := git.PlainClone(path, false, &git.CloneOptions{
+	gitRepo, err := git.PlainClone(path, bare, &git.CloneOptions{
 		URL:      r.GitURL.String(),
 		Auth:     auth,
 		Progress: os.Stdout,

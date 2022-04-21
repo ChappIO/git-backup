@@ -78,6 +78,8 @@ Options:
         The path to your config file. (default "git-backup.yml")
   -backup.fail-at-end
       Fail at the end of backing up repositories, rather than right away.
+  -backup.bare-clone
+        Make bare clones without checking out the main branch.
 ```
 
 ## Usage: Docker
