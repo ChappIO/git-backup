@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-if [[ -v $PUID || -v $PGID ]]
+if [[ -v "${PUID-}" || -v "${PGID-}" ]]
 then
   # We are running with an environment variable user change
   PUID=${PUID:-$(id -u)}
