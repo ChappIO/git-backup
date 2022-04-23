@@ -42,7 +42,15 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.17.8'
-      - run: ${{ matrix.goopts }} go build -o ${{ matrix.filename }} ./cmd/git-backup
+      - run: > 
+          ${{ matrix.goopts }} go build 
+              -o ${{ matrix.filename }} 
+              ./cmd/git-backup 
+              -ldflags="
+                 -X 'main.Version=${GITHUB_REF##*/}'
+                 -X 'main.CommitHash=${GITHUB_SHA}'
+                 -X 'main.BuildTimestamp=$(date)'
+              "
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
