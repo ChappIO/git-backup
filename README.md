@@ -79,7 +79,9 @@ Options:
   -backup.fail-at-end
       Fail at the end of backing up repositories, rather than right away.
   -backup.bare-clone
-        Make bare clones without checking out the main branch.
+      Make bare clones without checking out the main branch.
+  -version
+      Show the version number and exit.
 ```
 
 ## Usage: Docker
