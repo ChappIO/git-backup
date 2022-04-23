@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 )
 
@@ -13,9 +14,20 @@ var configFilePath = flag.String("config.file", "git-backup.yml", "The path to y
 var targetPath = flag.String("backup.path", "backup", "The target path to the backup folder.")
 var failAtEnd = flag.Bool("backup.fail-at-end", false, "Fail at the end of backing up repositories, rather than right away.")
 var bareClone = flag.Bool("backup.bare-clone", false, "Make bare clones without checking out the main branch.")
+var printVersion = flag.Bool("version", false, "Show the version number and exit.")
+
+var Version = "dev"
+var CommitHash = "n/a"
+var BuildTimestamp = "n/a"
 
 func main() {
 	flag.Parse()
+
+	if *printVersion {
+		log.Printf("git-backup, version %s (%s-%s)", Version, runtime.GOOS, runtime.GOARCH)
+		log.Printf("Built %s (%s)", CommitHash, BuildTimestamp)
+		os.Exit(0)
+	}
 
 	config := loadConfig()
 	sources := config.GetSources()
