@@ -1,10 +1,11 @@
 #!/bin/sh
 set -eu
 
-PUID=${PUID:-1000}
-PGID=${PGID:-1000}
+PUID=${PUID:-$(id -u)}
+PGID=${PGID:-$(id -g)}
 
 groupmod -o -g "$PGID" git-backup
 usermod -o -u "$PUID"  git-backup
+chown git-backup:git-backup /backup
 
-/git-backup "$@"
+su git-backup /git-backup "$@"
