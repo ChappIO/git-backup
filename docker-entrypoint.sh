@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-if [[ "${id -u}" == "0" ]]
+if [[ -v $PUID || -v $PGID ]]
 then
   # We are running with an environment variable user change
   PUID=${PUID:-$(id -u)}
@@ -14,7 +14,7 @@ then
   chown git-backup:git-backup /backup
 
   # Let's go!
-  su -s /bin/sh git-backup -c "/git-backup ${@}" whoami
+  su -s /bin/sh git-backup -c "/git-backup $@" whoami
 else
   # We are running through normal docker user changes, so nothing special to do
   git-backup /git-backup "$@"
