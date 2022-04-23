@@ -11,9 +11,6 @@ RUN chmod +x /git-backup
 
 ## Add the user for command execution
 RUN apk add --no-cache shadow
-RUN groupmod -g 0 users && \
- useradd -o -u 0 -U -d /backups -s /bin/false git-backup && \
- usermod -G users git-backup
 
 ADD ./docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
