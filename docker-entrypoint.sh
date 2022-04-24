@@ -17,8 +17,6 @@ else
   chown git-backup:git-backup /backups
 
   # Let's go!
-  su -s /bin/sh git-backup <<EOF
-    /git-backup "$@"
-  EOF
+  echo /git-backup "$@" | su -s /bin/sh git-backup
 fi
 
