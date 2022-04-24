@@ -91,5 +91,16 @@ First, create your [git-backup.yml file](#configuration-file) at `/path/to/your/
 Then update your backups using the mounted volume.
 
 ```bash
-docker run --volume /path/to/backups:/backups ghcr.io/chappio/git-backup:latest
+docker run -v /path/to/backups:/backups ghcr.io/chappio/git-backup:1
 ```
+
+### Parameters
+
+You can specify several parameters when starting this container.
+
+| **Parameter**                  | **Description**                                                                        |
+|--------------------------------|----------------------------------------------------------------------------------------|
+| `-v /path/to/backups:/backups` | Mount the folder where you want to store your backups and read you configuration file. |
+| `-e TZ=Europe/Amsterdam`       | Set the timezone used for logging.                                                     |
+| `-e PUID=0`                    | Set the user id of the unix user who will own the backup files in /backup.             |
+| `-e PGID=0`                    | Set the group id of the unix user's group who will own the backup files.               | 
