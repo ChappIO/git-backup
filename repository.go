@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
@@ -21,13 +22,13 @@ type Repository struct {
 	FullName string
 }
 
-func isBare(repo *git.Repository) (bool, error) {
+func isBare(repo *git.Repository) bool {
 	config, err := repo.Config()
 	if err != nil {
-		return false, err
+		return false
 	}
 
-	return config.Core.IsBare, nil
+	return config.Core.IsBare
 }
 
 func (r *Repository) CloneInto(path string, bare bool) error {
@@ -46,21 +47,45 @@ func (r *Repository) CloneInto(path string, bare bool) error {
 	})
 
 	if err == git.ErrRepositoryAlreadyExists {
-		// Pull instead of clone
-		if gitRepo, err = git.PlainOpen(path); err == nil {
-			// we need to check whether it's a bare repo or not.
-			// if not we should pull, if it is then pull won't work
-			if isBare, bErr := isBare(gitRepo); bErr == nil && !isBare {
-				if w, wErr := gitRepo.Worktree(); wErr != nil {
-					err = wErr
-				} else {
-					err = w.Pull(&git.PullOptions{
-						Auth:     auth,
-						Progress: os.Stdout,
-					})
-				}
-			}
+		// as the repo already exists, we just plain open it
+		gitRepo, err = git.PlainOpen(path)
+		if err != nil {
+			return err
 		}
+	}
+
+	var remotes []*git.Remote // we only create this variable here so we don't have to use := with the Remotes() call, which would create a new err
+	remotes, err = gitRepo.Remotes()
+	if err != nil {
+		return err
+	}
+
+	// we iterate over all the remotes, and we fetch all their heads
+	for _, remote := range remotes {
+		err = remote.Fetch(&git.FetchOptions{
+			Auth:     auth,
+			Progress: os.Stdout,
+			Tags:     git.AllTags,
+			Force:    true,
+			RefSpecs: []config.RefSpec{"+refs/heads/*:refs/heads/*"},
+		})
+		if err != nil && err != git.NoErrAlreadyUpToDate {
+			break
+		}
+	}
+
+	if !isBare(gitRepo) {
+		var worktree *git.Worktree // don't wanna shadow err
+		worktree, err = gitRepo.Worktree()
+		if err != nil {
+			return err
+		}
+
+		// this should probably be replaced with a Checkout call instead
+		err = worktree.Pull(&git.PullOptions{
+			Auth:     auth,
+			Progress: os.Stdout,
+		})
 	}
 
 	switch err {
@@ -68,25 +93,8 @@ func (r *Repository) CloneInto(path string, bare bool) error {
 		log.Printf("%s is an empty repository", r.FullName)
 		//  Empty repo does not need backup
 		return nil
-	default:
-		return err
 	case git.NoErrAlreadyUpToDate:
 		log.Printf("No need to pull, %s is already up-to-date", r.FullName)
-		// Already up to date on current branch, still need to refresh other branches
-		fallthrough
-	case nil:
-		// No errors, continue
-		err = gitRepo.Fetch(&git.FetchOptions{
-			Auth:     auth,
-			Progress: os.Stdout,
-			Tags:     git.AllTags,
-			Force:    true,
-		})
-	}
-
-	switch err {
-	case git.NoErrAlreadyUpToDate:
-		log.Printf("No need to fetch, %s is already up-to-date", r.FullName)
 		return nil
 	default:
 		return err
