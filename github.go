@@ -3,21 +3,24 @@ package git_backup
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-github/v43/github"
-	"golang.org/x/oauth2"
 	"log"
 	"net/url"
+	"slices"
 	"strings"
+
+	"github.com/google/go-github/v43/github"
+	"golang.org/x/oauth2"
 )
 
 type GithubConfig struct {
-	JobName      string `yaml:"job_name"`
-	AccessToken  string `yaml:"access_token"`
-	URL          string `yaml:"url,omitempty"`
-	Starred      *bool  `yaml:"starred,omitempty"`
-	OrgMember    *bool  `yaml:"org_member,omitempty"`
-	Collaborator *bool  `yaml:"collaborator,omitempty"`
-	Owned        *bool  `yaml:"owned,omitempty"`
+	JobName      string   `yaml:"job_name"`
+	AccessToken  string   `yaml:"access_token"`
+	URL          string   `yaml:"url,omitempty"`
+	Starred      *bool    `yaml:"starred,omitempty"`
+	OrgMember    *bool    `yaml:"org_member,omitempty"`
+	Collaborator *bool    `yaml:"collaborator,omitempty"`
+	Owned        *bool    `yaml:"owned,omitempty"`
+	Exclude      []string `yaml:"exclude,omitempty"`
 	client       *github.Client
 }
 
@@ -39,16 +42,24 @@ func (c *GithubConfig) ListRepositories() ([]*Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make([]*Repository, len(repos))
-	for i, repo := range repos {
+	out := make([]*Repository, 0, len(repos))
+	for _, repo := range repos {
 		gitUrl, err := url.Parse(*repo.CloneURL)
 		if err != nil {
 			return out, err
 		}
 		gitUrl.User = url.UserPassword("github", c.AccessToken)
-		out[i] = &Repository{
-			FullName: *repo.FullName,
-			GitURL:   *gitUrl,
+
+		isExcluded := slices.ContainsFunc(c.Exclude, func(s string) bool {
+			return strings.EqualFold(s, *repo.FullName)
+		})
+		if isExcluded {
+			log.Printf("Skipping excluded repository: %s", *repo.FullName)
+		} else {
+			out = append(out, &Repository{
+				FullName: *repo.FullName,
+				GitURL:   *gitUrl,
+			})
 		}
 	}
 	return out, nil
