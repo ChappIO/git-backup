@@ -1,18 +1,22 @@
 package git_backup
 
 import (
-	"github.com/xanzy/go-gitlab"
 	"log"
 	"net/url"
+	"slices"
+	"strings"
+
+	"github.com/xanzy/go-gitlab"
 )
 
 type GitLabConfig struct {
-	URL         string `yaml:"url,omitempty"`
-	JobName     string `yaml:"job_name"`
-	AccessToken string `yaml:"access_token"`
-	Starred     *bool  `yaml:"starred,omitempty"`
-	Member      *bool  `yaml:"member,omitempty"`
-	Owned       *bool  `yaml:"owned,omitempty"`
+	URL         string   `yaml:"url,omitempty"`
+	JobName     string   `yaml:"job_name"`
+	AccessToken string   `yaml:"access_token"`
+	Starred     *bool    `yaml:"starred,omitempty"`
+	Member      *bool    `yaml:"member,omitempty"`
+	Owned       *bool    `yaml:"owned,omitempty"`
+	Exclude     []string `yaml:"exclude,omitempty"`
 	client      *gitlab.Client
 }
 
@@ -64,7 +68,14 @@ func (g *GitLabConfig) ListRepositories() ([]*Repository, error) {
 
 	outSlice := make([]*Repository, 0, len(out))
 	for _, repository := range out {
-		outSlice = append(outSlice, repository)
+		isExcluded := slices.ContainsFunc(g.Exclude, func(s string) bool {
+			return strings.EqualFold(s, repository.FullName)
+		})
+		if isExcluded {
+			log.Printf("Skipping excluded repository: %s", repository.FullName)
+		} else {
+			outSlice = append(outSlice, repository)
+		}
 	}
 
 	return outSlice, nil
