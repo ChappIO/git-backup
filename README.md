@@ -79,13 +79,15 @@ Usage: git-backup
 
 Options:
   -backup.path string
-        The target path to the backup folder. (default "backup")
+      The target path to the backup folder. (default "backup")
   -config.file string
-        The path to your config file. (default "git-backup.yml")
+      The path to your config file. (default "git-backup.yml")
   -backup.fail-at-end
       Fail at the end of backing up repositories, rather than right away.
   -backup.bare-clone
       Make bare clones without checking out the main branch.
+  -insecure
+      Use this flag to disable verification of SSL/TLS certificates
   -version
       Show the version number and exit.
 ```

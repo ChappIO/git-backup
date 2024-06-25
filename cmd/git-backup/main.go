@@ -1,9 +1,11 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	gitbackup "git-backup"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -15,6 +17,7 @@ var targetPath = flag.String("backup.path", "backup", "The target path to the ba
 var failAtEnd = flag.Bool("backup.fail-at-end", false, "Fail at the end of backing up repositories, rather than right away.")
 var bareClone = flag.Bool("backup.bare-clone", false, "Make bare clones without checking out the main branch.")
 var printVersion = flag.Bool("version", false, "Show the version number and exit.")
+var enableInsecure = flag.Bool("insecure", false, "Use this flag to disable verification of SSL/TLS certificates")
 
 var Version = "dev"
 var CommitHash = "n/a"
@@ -22,11 +25,16 @@ var BuildTimestamp = "n/a"
 
 func main() {
 	flag.Parse()
+	log.Printf("inscure: %v", *enableInsecure)
 
 	if *printVersion {
 		log.Printf("git-backup, version %s (%s-%s)", Version, runtime.GOOS, runtime.GOARCH)
 		log.Printf("Built %s (%s)", CommitHash, BuildTimestamp)
 		os.Exit(0)
+	}
+
+	if *enableInsecure {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
 	config := loadConfig()
