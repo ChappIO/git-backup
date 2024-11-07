@@ -1,6 +1,7 @@
 package git_backup
 
 import (
+	"errors"
 	"log"
 	"net/url"
 	"os"
@@ -45,7 +46,7 @@ func (r *Repository) CloneInto(path string, bare bool) error {
 		Progress: os.Stdout,
 	})
 
-	if err == git.ErrRepositoryAlreadyExists {
+	if errors.Is(err, git.ErrRepositoryAlreadyExists) {
 		// Pull instead of clone
 		if gitRepo, err = git.PlainOpen(path); err == nil {
 			// we need to check whether it's a bare repo or not.
@@ -63,18 +64,18 @@ func (r *Repository) CloneInto(path string, bare bool) error {
 		}
 	}
 
-	switch err {
-	case transport.ErrEmptyRemoteRepository:
+	switch {
+	case errors.Is(err, transport.ErrEmptyRemoteRepository):
 		log.Printf("%s is an empty repository", r.FullName)
 		//  Empty repo does not need backup
 		return nil
 	default:
 		return err
-	case git.NoErrAlreadyUpToDate:
+	case errors.Is(err, git.NoErrAlreadyUpToDate):
 		log.Printf("No need to pull, %s is already up-to-date", r.FullName)
 		// Already up to date on current branch, still need to refresh other branches
 		fallthrough
-	case nil:
+	case err == nil:
 		// No errors, continue
 		err = gitRepo.Fetch(&git.FetchOptions{
 			Auth:     auth,
