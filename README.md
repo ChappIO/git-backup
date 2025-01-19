@@ -40,7 +40,10 @@ github:
     # (default: https://api.github.com)
     url: https://github.mydomain.com
     # (optional) Exclude this list of repos
+    # or whole organizations/users
     exclude:
+      - my-excluded-org
+      - my-excluded-user
       - my-namespace/excluded-repository-name
 # The gitlab section contains backup jobs for
 # GitLab.com and GitLab on premise
