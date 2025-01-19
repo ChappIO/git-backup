@@ -59,7 +59,9 @@ func (c *GithubConfig) ListRepositories() ([]*Repository, error) {
 				return false
 			}
 
-			repoOwner = *repo.FullName[:strings.Index(*repo.FullName, "/")]
+			repoFullName := *repo.FullName
+
+			repoOwner := repoFullName[:strings.Index(repoFullName, "/")]
 			return strings.EqualFold(s, repoOwner)
 		})
 		if isExcluded {
