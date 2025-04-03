@@ -51,7 +51,18 @@ func (c *GithubConfig) ListRepositories() ([]*Repository, error) {
 		gitUrl.User = url.UserPassword("github", c.AccessToken)
 
 		isExcluded := slices.ContainsFunc(c.Exclude, func(s string) bool {
-			return strings.EqualFold(s, *repo.FullName)
+			if strings.EqualFold(s, *repo.FullName) {
+				return true
+			}
+
+			if strings.Contains(s, "/") {
+				return false
+			}
+
+			repoFullName := *repo.FullName
+
+			repoOwner := repoFullName[:strings.Index(repoFullName, "/")]
+			return strings.EqualFold(s, repoOwner)
 		})
 		if isExcluded {
 			log.Printf("Skipping excluded repository: %s", *repo.FullName)

@@ -69,7 +69,18 @@ func (g *GitLabConfig) ListRepositories() ([]*Repository, error) {
 	outSlice := make([]*Repository, 0, len(out))
 	for _, repository := range out {
 		isExcluded := slices.ContainsFunc(g.Exclude, func(s string) bool {
-			return strings.EqualFold(s, repository.FullName)
+			if strings.EqualFold(s, repository.FullName) {
+				return true
+			}
+
+			if strings.Contains(s, "/") {
+				return false
+			}
+
+			repoFullName := repository.FullName
+
+			repoOwner := repoFullName[:strings.Index(repoFullName, "/")]
+			return strings.EqualFold(s, repoOwner)
 		})
 		if isExcluded {
 			log.Printf("Skipping excluded repository: %s", repository.FullName)
