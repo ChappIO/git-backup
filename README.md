@@ -8,7 +8,9 @@ The latest version can be downloaded from the [releases page](https://github.com
 
 ## Configuration File
 
-Example yaml Configuration:
+The configuration file supports go templating to load secrets and other variables from the environment.
+An example `yaml`-Configuration looks like:
+
 ```yaml
 # The github section contains backup jobs for
 # GitHub and GitHub Enterprise
@@ -21,7 +23,7 @@ github:
     # token. Create one with the scopes:
     # "read:org, repo"
     # https://github.com/settings/tokens/new?scopes=repo,read:org
-    access_token: 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
+    access_token: '{{ env "GITHUB_PAT" }}'
     # (optional) Back up repos you own.
     # (default: true)
     owned: true
@@ -55,7 +57,7 @@ gitlab:
     # (required) The GitLab access token.
     # Create one with the scopes: "api"
     # https://gitlab.com/-/profile/personal_access_tokens?scopes=api&name=git-backup
-    access_token: glpat-6t78yuihy789uy8t768
+    access_token: '{{ env "GITLAB_PAT" }}'
     # (optional) Back up repos you own.
     # (default: true)
     owned: true
