@@ -21,6 +21,7 @@ type GithubConfig struct {
 	Collaborator *bool    `yaml:"collaborator,omitempty"`
 	Owned        *bool    `yaml:"owned,omitempty"`
 	Exclude      []string `yaml:"exclude,omitempty"`
+	Repositories []string `yaml:"repositories,omitempty"`
 	client       *github.Client
 }
 
@@ -110,9 +111,15 @@ func (c *GithubConfig) getMe() (*github.User, error) {
 }
 
 func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
-	all := make([]*github.Repository, 0)
+	all := make([]*github.Repository, len(c.Repositories))
 	var err error
 
+	// fetch only the configured repos
+	if len(c.Repositories) > 0 {
+		return c.getReposOnDemand(c.Repositories)
+	}
+
+	// use discovery mechanisms
 	for repos, response, apiErr := c.getRepos(1); true; repos, response, apiErr = c.getRepos(response.NextPage) {
 		if apiErr != nil {
 			err = apiErr
@@ -145,6 +152,27 @@ func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
 	}
 
 	return all, err
+}
+
+func (c *GithubConfig) getReposOnDemand(repos []string) ([]*github.Repository, error) {
+
+	ghRepos := make([]*github.Repository, 0, len(repos))
+
+	for _, repo := range repos {
+		parts := strings.Split(repo, "/")
+
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid repository name '%v' must be of schema owner/repo", repo)
+		}
+
+		ghRepo, _, err := c.client.Repositories.Get(context.Background(), parts[0], parts[1])
+		if err != nil {
+			return nil, err
+		}
+		ghRepos = append(ghRepos, ghRepo)
+	}
+
+	return ghRepos, nil
 }
 
 func (c *GithubConfig) getRepos(page int) ([]*github.Repository, *github.Response, error) {
