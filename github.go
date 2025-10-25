@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"maps"
 	"net/url"
 	"slices"
 	"strings"
@@ -45,34 +46,22 @@ func (c *GithubConfig) ListRepositories() ([]*Repository, error) {
 	}
 	out := make([]*Repository, 0, len(repos))
 	for _, repo := range repos {
+		if isExcluded(c.Exclude, *repo.FullName) {
+			log.Printf("Skipping excluded repository: %s", *repo.FullName)
+			continue
+		}
+
 		gitUrl, err := url.Parse(*repo.CloneURL)
 		if err != nil {
 			return out, err
 		}
 		gitUrl.User = url.UserPassword("github", c.AccessToken)
 
-		isExcluded := slices.ContainsFunc(c.Exclude, func(s string) bool {
-			if strings.EqualFold(s, *repo.FullName) {
-				return true
-			}
-
-			if strings.Contains(s, "/") {
-				return false
-			}
-
-			repoFullName := *repo.FullName
-
-			repoOwner := repoFullName[:strings.Index(repoFullName, "/")]
-			return strings.EqualFold(s, repoOwner)
+		out = append(out, &Repository{
+			FullName: *repo.FullName,
+			GitURL:   *gitUrl,
 		})
-		if isExcluded {
-			log.Printf("Skipping excluded repository: %s", *repo.FullName)
-		} else {
-			out = append(out, &Repository{
-				FullName: *repo.FullName,
-				GitURL:   *gitUrl,
-			})
-		}
+
 	}
 	return out, nil
 }
@@ -111,21 +100,30 @@ func (c *GithubConfig) getMe() (*github.User, error) {
 }
 
 func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
-	all := make([]*github.Repository, len(c.Repositories))
-	var err error
+	all := make(map[string]*github.Repository, 0)
 
-	// fetch only the configured repos
+	// fetch the configured repos
 	if len(c.Repositories) > 0 {
-		return c.getReposOnDemand(c.Repositories)
+		if repos, err := c.getRepoList(c.Repositories); err != nil {
+			return nil, err
+		} else {
+			for _, repo := range repos {
+				all[*repo.FullName] = repo
+			}
+		}
 	}
 
 	// use discovery mechanisms
-	for repos, response, apiErr := c.getRepos(1); true; repos, response, apiErr = c.getRepos(response.NextPage) {
+	var err error
+
+	for repos, response, apiErr := c.discoverRepos(1); true; repos, response, apiErr = c.discoverRepos(response.NextPage) {
 		if apiErr != nil {
 			err = apiErr
 			break
 		} else {
-			all = append(all, repos...)
+			for _, repo := range repos {
+				all[*repo.FullName] = repo
+			}
 		}
 
 		if len(repos) == 0 || response.NextPage == 0 {
@@ -133,7 +131,7 @@ func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
 		}
 	}
 	if err != nil {
-		return all, err
+		return nil, err
 	}
 
 	if *c.Starred {
@@ -142,7 +140,9 @@ func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
 				err = apiErr
 				break
 			} else {
-				all = append(all, repos...)
+				for _, repo := range repos {
+					all[*repo.FullName] = repo
+				}
 			}
 
 			if len(repos) == 0 || response.NextPage == 0 {
@@ -151,10 +151,10 @@ func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
 		}
 	}
 
-	return all, err
+	return slices.Collect(maps.Values(all)), err
 }
 
-func (c *GithubConfig) getReposOnDemand(repos []string) ([]*github.Repository, error) {
+func (c *GithubConfig) getRepoList(repos []string) ([]*github.Repository, error) {
 
 	ghRepos := make([]*github.Repository, 0, len(repos))
 
@@ -175,7 +175,7 @@ func (c *GithubConfig) getReposOnDemand(repos []string) ([]*github.Repository, e
 	return ghRepos, nil
 }
 
-func (c *GithubConfig) getRepos(page int) ([]*github.Repository, *github.Response, error) {
+func (c *GithubConfig) discoverRepos(page int) ([]*github.Repository, *github.Response, error) {
 	affiliations := make([]string, 0)
 
 	if *c.Owned {
