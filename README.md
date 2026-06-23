@@ -15,10 +15,14 @@ An example `yaml`-Configuration looks like:
 # The github section contains backup jobs for
 # GitHub and GitHub Enterprise
 github:
-    # (optional) The job name. This is used to
-    # create a subfolder in the backup folder. 
-    # (default: GitHub)
+  # (optional) The job name. This is used to
+  # create a subfolder in the backup folder.
+  # (default: GitHub)
   - job_name: github.com
+    # (optional) Set this url to connect to
+    # your self-hosted github install.
+    # (default: https://api.github.com)
+    url: https://github.mydomain.com
     # (required) The GitHub personal access
     # token. Create one with the scopes:
     # "read:org, repo"
@@ -30,17 +34,19 @@ github:
     # (optional) Back up repos you starred.
     # (default: true)
     starred: true
-    # (optional) Back up repos on which you 
+    # (optional) Back up repos on which you
     # are a collaborator. (default: true)
     collaborator: true
-    # (optional) Back up repos owned by 
+    # (optional) Back up repos owned by
     # organisations of which you are a member.
     # (default: true)
     org_member: true
-    # (optional) Set this url to connect to
-    # your self-hosted github install.
-    # (default: https://api.github.com)
-    url: https://github.mydomain.com
+    # (optional) A list of repositories to backup.
+    # Will be merged with the other discovery mechanisms
+    # and it's result filtered with excluded repos.
+    # (default: [])
+    repositories:
+      - ChappIO/git-backup
     # (optional) Exclude this list of repos
     # or whole organizations/users
     exclude:
@@ -51,9 +57,13 @@ github:
 # GitLab.com and GitLab on premise
 gitlab:
   # (optional) The job name. This is used to
-  # create a subfolder in the backup folder. 
+  # create a subfolder in the backup folder.
   # (default: GitLab)
   - job_name: gitlab.com
+    # (optional) Set this url to connect to
+    # your self-hosted gitlab install.
+    # (default: https://gitlab.com/)
+    url: https://gitlab.mydomain.com
     # (required) The GitLab access token.
     # Create one with the scopes: "api"
     # https://gitlab.com/-/profile/personal_access_tokens?scopes=api&name=git-backup
@@ -64,14 +74,17 @@ gitlab:
     # (optional) Back up repos you starred.
     # (default: true)
     starred: true
-    # (optional) Back up repos owned by 
+    # (optional) Back up repos owned by
     # teams of which you are a member.
     # (default: true)
     member: true
-    # (optional) Set this url to connect to
-    # your self-hosted gitlab install.
-    # (default: https://gitlab.com/)
-    url: https://gitlab.mydomain.com
+    # (optional) A list of repositories to backup.
+    # Will be merged with the other discovery mechanisms
+    # and it's result filtered with excluded repos.
+    # (default: [])
+    repositories:
+      - gnuwget/wget2
+      - gitlab-org/api/client-go
     # (optional) Exclude this list of repos
     # or whole organizations/users
     exclude:
@@ -115,8 +128,8 @@ docker run -v /path/to/backups:/backups ghcr.io/chappio/git-backup:1
 You can specify several parameters when starting this container.
 
 | **Parameter**                  | **Description**                                                                        |
-|--------------------------------|----------------------------------------------------------------------------------------|
+| ------------------------------ | -------------------------------------------------------------------------------------- |
 | `-v /path/to/backups:/backups` | Mount the folder where you want to store your backups and read you configuration file. |
 | `-e TZ=Europe/Amsterdam`       | Set the timezone used for logging.                                                     |
 | `-e PUID=0`                    | Set the user id of the unix user who will own the backup files in /backup.             |
-| `-e PGID=0`                    | Set the group id of the unix user's group who will own the backup files.               | 
+| `-e PGID=0`                    | Set the group id of the unix user's group who will own the backup files.               |

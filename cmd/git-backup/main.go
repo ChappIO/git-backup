@@ -59,7 +59,7 @@ func main() {
 			os.Exit(100)
 		}
 		for _, repo := range repos {
-			log.Printf("Discovered %s", repo.FullName)
+			log.Printf("Backing up %s", repo.FullName)
 			targetPath := filepath.Join(*targetPath, sourceName, repo.FullName)
 			err := os.MkdirAll(targetPath, os.ModePerm)
 			if err != nil {
