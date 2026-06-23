@@ -1,9 +1,12 @@
 package git_backup
 
 import (
-	"gopkg.in/yaml.v3"
+	"bytes"
 	"io"
 	"os"
+	"text/template"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -53,9 +56,37 @@ func LoadFile(path string) (out Config, err error) {
 }
 
 func LoadReader(reader io.Reader) (out Config, err error) {
-	dec := yaml.NewDecoder(reader)
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return
+	}
+	rendered, err := parse(string(data))
+	if err != nil {
+		return
+	}
+
+	dec := yaml.NewDecoder(rendered)
 	dec.KnownFields(true)
 	err = dec.Decode(&out)
 	out.setDefaults()
+	return
+}
+
+func parse(rawTemplate string) (rendered io.Reader, err error) {
+	fmap := template.FuncMap{
+		"env": os.Getenv,
+	}
+
+	tmpl := template.New("").Funcs(fmap).Option("missingkey=error")
+
+	tmpl, err = tmpl.Parse(rawTemplate)
+	if err != nil {
+		return
+	}
+
+	buf := &bytes.Buffer{}
+	err = tmpl.Execute(buf, nil)
+	rendered = bytes.NewReader(buf.Bytes())
+
 	return
 }
