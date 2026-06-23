@@ -20,7 +20,7 @@ jobs:
           - goos: darwin
             goarch: arm64
             goopts: ""
-            filename: git-backup-darwin-m1
+            filename: git-backup-darwin-apple-silicon
           - goos: linux
             goarch: amd64
             goopts: ""
