@@ -157,7 +157,7 @@ func (g *GitLabConfig) discoverRepos(opts *gitlab.ListProjectsOptions) ([]*gitla
 	repos := make([]*gitlab.Project, 0, 100)
 
 	// paginate
-	for i := 1; true; i++ {
+	for i := int64(1); true; i++ {
 		opts.ListOptions.Page = i
 		projects, _, err := g.client.Projects.ListProjects(opts)
 		if err != nil {
