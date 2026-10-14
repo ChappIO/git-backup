@@ -47,6 +47,13 @@ github:
     # (default: [])
     repositories:
       - ChappIO/git-backup
+    # (optional) Backup all public repositories of these
+    # organizations, even if you are not a member.
+    # Will be merged with the other discovery mechanisms
+    # and it's result filtered with excluded repos.
+    # (default: [])
+    organization:
+      - golang
     # (optional) Exclude this list of repos
     # or whole organizations/users
     exclude:
@@ -85,6 +92,13 @@ gitlab:
     repositories:
       - gnuwget/wget2
       - gitlab-org/api/client-go
+    # (optional) Backup all public projects of these groups
+    # (including subgroups), even if you are not a member.
+    # Will be merged with the other discovery mechanisms
+    # and it's result filtered with excluded repos.
+    # (default: [])
+    organization:
+      - gnuwget
     # (optional) Exclude this list of repos
     # or whole organizations/users
     exclude:

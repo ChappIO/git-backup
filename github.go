@@ -23,6 +23,7 @@ type GithubConfig struct {
 	Owned        *bool    `yaml:"owned,omitempty"`
 	Exclude      []string `yaml:"exclude,omitempty"`
 	Repositories []string `yaml:"repositories,omitempty"`
+	Organization []string `yaml:"organization,omitempty"`
 	client       *github.Client
 }
 
@@ -116,6 +117,21 @@ func (c *GithubConfig) getAllRepos() ([]*github.Repository, error) {
 	// use discovery mechanisms
 	var err error
 
+	for _, org := range c.Organization {
+		for repos, response, apiErr := c.getOrgRepos(org, 1); true; repos, response, apiErr = c.getOrgRepos(org, response.NextPage) {
+			if apiErr != nil {
+				return nil, apiErr
+			}
+			for _, repo := range repos {
+				all[*repo.FullName] = repo
+			}
+
+			if len(repos) == 0 || response.NextPage == 0 {
+				break
+			}
+		}
+	}
+
 	for repos, response, apiErr := c.discoverRepos(1); true; repos, response, apiErr = c.discoverRepos(response.NextPage) {
 		if apiErr != nil {
 			err = apiErr
@@ -173,6 +189,16 @@ func (c *GithubConfig) getRepoList(repos []string) ([]*github.Repository, error)
 	}
 
 	return ghRepos, nil
+}
+
+func (c *GithubConfig) getOrgRepos(org string, page int) ([]*github.Repository, *github.Response, error) {
+	return c.client.Repositories.ListByOrg(context.Background(), org, &github.RepositoryListByOrgOptions{
+		Type: "public",
+		ListOptions: github.ListOptions{
+			Page:    page,
+			PerPage: 100,
+		},
+	})
 }
 
 func (c *GithubConfig) discoverRepos(page int) ([]*github.Repository, *github.Response, error) {

@@ -18,6 +18,7 @@ type GitLabConfig struct {
 	Owned        *bool    `yaml:"owned,omitempty"`
 	Exclude      []string `yaml:"exclude,omitempty"`
 	Repositories []string `yaml:"repositories,omitempty"`
+	Organization []string `yaml:"organization,omitempty"`
 	client       *gitlab.Client
 }
 
@@ -101,6 +102,16 @@ func (g *GitLabConfig) getAllRepos() ([]*gitlab.Project, error) {
 	}
 
 	// use discovery mechanisms
+	for _, group := range g.Organization {
+		if repos, err := g.getGroupRepos(group); err != nil {
+			return nil, err
+		} else {
+			for _, repo := range repos {
+				all[repo.PathWithNamespace] = repo
+			}
+		}
+	}
+
 	if *g.Starred {
 		if repos, err := g.discoverRepos(&gitlab.ListProjectsOptions{Starred: boolPointer(true)}); err != nil {
 			return nil, err
@@ -147,6 +158,32 @@ func (g *GitLabConfig) getRepoList(repos []string) ([]*gitlab.Project, error) {
 	}
 	return glProjects, nil
 
+}
+
+func (g *GitLabConfig) getGroupRepos(group string) ([]*gitlab.Project, error) {
+	opts := &gitlab.ListGroupProjectsOptions{
+		IncludeSubGroups: boolPointer(true),
+		Simple:           boolPointer(true),
+		Visibility:       gitlab.Ptr(gitlab.PublicVisibility),
+	}
+	opts.ListOptions.PerPage = 100
+
+	repos := make([]*gitlab.Project, 0, 100)
+
+	// paginate
+	for i := 1; true; i++ {
+		opts.ListOptions.Page = i
+		projects, _, err := g.client.Groups.ListGroupProjects(group, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(projects) == 0 {
+			break
+		}
+		repos = append(repos, projects...)
+	}
+	return repos, nil
 }
 
 func (g *GitLabConfig) discoverRepos(opts *gitlab.ListProjectsOptions) ([]*gitlab.Project, error) {
