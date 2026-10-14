@@ -3,7 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	gitbackup "git-backup"
+	gitbackup "github.com/ChappIO/git-backup"
 	"log"
 	"net/http"
 	"os"
